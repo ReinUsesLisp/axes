@@ -1,6 +1,6 @@
 # axes
 Axes is an extension to Common Lisp to support easy symbol insertion inside
-a template. It's uses character #\@ (at) as keyword.
+a template. It's uses character @ (at) as keyword.
 
 ## Examples
 Basic syntax inserts the desired symbol replacing @ :
@@ -16,7 +16,7 @@ Basic syntax inserts the desired symbol replacing @ :
   (values))
 ```
 
-It is also possible to use insert multiple symbols, syntax becomes @N@ where N
+It is also possible to use insert multiple symbols, syntax becomes `@N@` where N
 is the index.
 ```lisp
 (progn-axes ((horizontal x width) (vertical y height))
