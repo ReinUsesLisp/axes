@@ -33,8 +33,8 @@ is the index.
 
 It's possible to map return values, like in the following example:
 ```lisp
-(let ((x -5) (y 5))
+(let ((foo-x -5) (foo-y 5))
   (map-axes (x y)
-    (+ @ 5)))
+    (+ foo-@ 5)))
 => (0 10)
 ```
