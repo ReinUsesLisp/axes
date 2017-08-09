@@ -1,6 +1,6 @@
 # axes
-Axes is an extension to Common Lisp to support easy symbol insertion inside a
-other symbols. It's uses character #\@ (at) as keyword.
+Axes is an extension to Common Lisp to support easy symbol insertion inside
+a template. It's uses character #\@ (at) as keyword.
 
 ## Examples
 Basic syntax inserts the desired symbol replacing @ :

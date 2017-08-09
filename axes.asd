@@ -16,7 +16,7 @@
 ;;;;
 
 (asdf:defsystem #:axes
-  :description "Used to insert symbols inside other symbols"
+  :description "Used to insert symbols inside a template"
   :author "ReinUsesLisp <reinuseslisp@airmail.cc>"
   :license "LLGPL"
   :pathname "src"
