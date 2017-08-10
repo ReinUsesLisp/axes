@@ -30,3 +30,15 @@ is the index.
   (defun move-vertical (foo)
     (incf (axis-y foo) (size-height foo))))
 ```
+
+Finally a hash-based symbol inserting is possible:
+```lisp
+(do-axes ((direction (horizontal vertical)) (size (width height)))
+  (defun resize-@direction@ (value object)
+    (incf (@size@ object) value)))
+
+;;; expands to:
+(progn
+  (defun resize-horizontal (value object) (incf (width object) value))
+  (defun resize-vertical (value object) (incf (height object) value)))
+```
