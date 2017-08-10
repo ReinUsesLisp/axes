@@ -19,5 +19,5 @@
 
 (defpackage :axes
   (:use #:cl)
-  (:export #:progn-axes #:do-axes #:map-axes))
+  (:export #:do-axes))
 

@@ -15,16 +15,25 @@
 ;;;;    along with axes.  If not, see <http://www.gnu.org/licenses/>.
 ;;;;
 
-(asdf:defsystem #:axes
-  :description "Used to insert symbols inside a template"
-  :author "ReinUsesLisp <reinuseslisp@airmail.cc>"
-  :license "LLGPL"
-  :pathname "src"
-  :serial t
-  :components ((:file "package")
-               (:file "helpers")
-               (:file "multiple")
-               (:file "individual")
-               (:file "hashed")
-               (:file "expansor")
-               (:file "axes")))
+(in-package :axes)
+
+(defmacro do-axes-individual (axes &body body)
+  (check-individual-axes axes)
+  `(progn
+     ,@(loop for axis in axes
+          collect `(progn
+                     ,@(operate-sexp body #'operate-symbol-individual axis)))
+     (values)))
+
+(defun operate-symbol-individual (symbol original-symbol replace)
+  (let* ((name (symbol-name symbol))
+         (start (position #\@ name)))
+    (if start
+        (operate-symbol-individual
+         (replace-section symbol replace start)
+         original-symbol
+         replace)
+        symbol)))
+
+(defun check-individual-axes (axes)
+  (declare (ignore axes)))
