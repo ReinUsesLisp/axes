@@ -17,67 +17,85 @@
 
 (in-package :axes)
 
-(defmacro progn-axes (axes &body body)
-  (check-axes axes)
+(defmacro do-axes (axes &body body)
+  `(,(find-axes-mode axes) ,axes ,@body))          
+
+(defmacro do-axes-multiple (axes &body body)
+  (check-multiple-axes axes)
   `(progn
      ,@(loop for axis in axes
-          collect `(progn ,@(operate-sexp body axis)))
+          collect `(progn
+                     ,@(operate-sexp body #'operate-symbol-multiple axis)))
      (values)))
 
-(defmacro do-axes (axes &body body)
-  `(progn-axes ,axes ,@body))
+(defmacro do-axes-individual (axes &body body)
+  (check-individual-axes axes)
+  `(progn
+     ,@(loop for axis in axes
+          collect `(progn
+                     ,@(operate-sexp body #'operate-symbol-individual axis)))
+     (values)))
 
-(defmacro map-axes (axes &body body)
-  (check-axes axes)
-  (let ((result (gensym "RESULT")))
-    `(let ((,result nil))
-       ,@(loop for axis in axes
-            collect `(push (progn ,@(operate-sexp body axis)) ,result))
-       (nreverse ,result))))
+(defmacro do-axes-hashed (axes &body body)
+  `(progn
+     ,@(loop for i from 0 upto (1- (length (second (first axes))))
+          collect `(progn
+                     ,@(operate-sexp body #'operate-symbol-hashed axes i)))
+     (values)))
 
-(defun operate-sexp (sexp axis)
+(defun operate-sexp (sexp operate &rest data)
   (cond
     ((listp sexp)
-     (if (member (first sexp) '(progn-axes do-axes map-axes))
+     (if (member (first sexp) '(do-axes map-axes))
          sexp                           ; guard nested expansion
          (loop for sub-sexp in sexp
-            collect (operate-sexp sub-sexp axis))))
-    ((symbolp sexp) (operate-symbol sexp axis))
+            collect (apply #'operate-sexp `(,sub-sexp ,operate ,@data)))))
+    ((symbolp sexp) (apply operate `(,sexp ,sexp ,@data)))
     (t sexp)))
 
-(defun operate-symbol (symbol axis)
-  (if (symbolp axis)
-      (operate-symbol-individual symbol axis)
-      (operate-symbol-multiple symbol axis)))
-
-(defun operate-symbol-individual (symbol replace)
+(defun operate-symbol-individual (symbol original-symbol replace)
   (let* ((name (symbol-name symbol))
          (start (position #\@ name)))
     (if start
         (operate-symbol-individual
          (replace-section symbol replace start)
+         original-symbol
          replace)
         symbol)))
 
-(defun operate-symbol-multiple (symbol axis &optional (original-symbol symbol))
+(defun operate-symbol-multiple (symbol original-symbol axis)
   (declare (symbol symbol original-symbol) (list axis))
-  (let* ((name (symbol-name symbol))
-         (start (position #\@ name)))
-    (if start
-        (let ((delta (position #\@ (subseq name (1+ start)))))
-          ;; check if there is a closing @
-          (unless delta
-            (error "No @N@ interval defined in symbol ~A." original-symbol))
-          (let* ((end (+ start delta 1))
-                 (index (parse-integer (subseq name (1+ start) end))))
-            ;; check if N is not out of scope
-            (unless (< -1 (1- index) (length axis))
-              (error "Invalid index ~D in symbol ~A." index original-symbol))
-            (operate-symbol-multiple
-             (replace-section symbol (nth (1- index) axis) start end)
-             axis
-             original-symbol)))
-        symbol)))
+  (multiple-value-bind (interval start end)
+      (find-interval symbol original-symbol)
+    (if (null interval)
+        symbol
+        (let ((index (parse-integer interval)))
+          ;; check if index is not out of scope
+          (unless (< -1 (1- index) (length axis))
+            (error "Invalid index ~D in symbol ~A." index original-symbol))
+          (operate-symbol-multiple
+           (replace-section symbol (nth (1- index) axis) start end)
+           original-symbol
+           axis)))))
+
+(defun operate-symbol-hashed (symbol original-symbol axes index)
+  (multiple-value-bind (interval start end)
+      (find-interval symbol original-symbol)
+    (if (null interval)
+        symbol
+        (let ((key (find interval axes :key #'first-name :test #'equalp)))
+          (unless key
+            (error "Key ~A not found in axes ~A" interval axes))
+          (operate-symbol-hashed
+           (replace-section symbol
+                            (nth index (second key))
+                            start end)
+           original-symbol
+           axes
+           index)))))
+
+(defun first-name (list)
+  (symbol-name (first list)))
 
 (defun replace-section (symbol replace start &optional (end start))
   (let ((name (symbol-name symbol)))
@@ -87,8 +105,32 @@
                     (subseq name (1+ end)))
             (symbol-package symbol))))
 
-(defun check-axes (axes)
-  (when (and (some #'listp axes) (some #'symbolp axes))
-    (error "You can't mix multiple axes with individual axes. ~A" axes))
-  (when (and (every #'listp axes) (reduce #'/= axes :key #'length))
-    (error "You can't mix axes different sizes. ~A" axes)))
+(defun check-multiple-axes (axes)
+  (when (reduce #'/= axes :key #'length)
+    (error "Mixed sizes in axes ~A" axes)))
+
+(defun check-individual-axes (axes)
+  (declare (ignore axes)))
+
+(defun find-interval (symbol original-symbol)
+  (let* ((name (symbol-name symbol))
+         (start (position #\@ name)))
+    (if (null start)
+        (values nil nil nil)
+        (let ((delta (position #\@ (subseq name (1+ start)))))
+          ;; check if there is a closing @
+          (unless delta
+            (error "No @-@ interval defined in symbol ~A." original-symbol))
+          (let* ((end (+ start delta 1))
+                 (interval (subseq name (1+ start) end)))
+            (values interval start end))))))
+
+(defun find-axes-mode (axes)
+  (cond
+    ((and (every #'listp axes)
+          (every #'symbolp (mapcar #'first axes))
+          (every #'listp (mapcar #'second axes)))
+     'do-axes-hashed)
+    ((every #'symbolp axes) 'do-axes-individual)
+    ((every #'listp axes) 'do-axes-multiple)
+    (t (error "Unknown axes mode ~A" axes))))

@@ -5,7 +5,7 @@ a template. It's uses character @ (at) as keyword.
 ## Examples
 Basic syntax inserts the desired symbol replacing @ :
 ```lisp
-(progn-axes (x y z)
+(do-axes (x y z)
   (incf (the-axis-@-in-foo foo) speed))
 
 ;;; expands to the equivalent of:
@@ -19,7 +19,7 @@ Basic syntax inserts the desired symbol replacing @ :
 It is also possible to use insert multiple symbols, syntax becomes `@N@` where N
 is the index.
 ```lisp
-(progn-axes ((horizontal x width) (vertical y height))
+(do-axes ((horizontal x width) (vertical y height))
   (defun move-@1@ (foo)
     (incf (axis-@2@ foo) (size-@3@ foo))))
 
@@ -29,12 +29,4 @@ is the index.
     (incf (axis-x foo) (size-width foo)))
   (defun move-vertical (foo)
     (incf (axis-y foo) (size-height foo))))
-```
-
-It's possible to map return values, like in the following example:
-```lisp
-(let ((foo-x -5) (foo-y 5))
-  (map-axes (x y)
-    (+ foo-@ 5)))
-=> (0 10)
 ```
