@@ -26,5 +26,4 @@
                (:file "multiple")
                (:file "individual")
                (:file "hashed")
-               (:file "expansor")
-               (:file "axes")))
+               (:file "expansor")))
