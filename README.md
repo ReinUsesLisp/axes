@@ -31,7 +31,7 @@ is the index.
     (incf (axis-y foo) (size-height foo))))
 ```
 
-Finally a hash-based symbol inserting is possible:
+A hash-based symbol inserting is possible:
 ```lisp
 (do-axes ((direction (horizontal vertical)) (size (width height)))
   (defun resize-@direction@ (value object)
@@ -41,4 +41,16 @@ Finally a hash-based symbol inserting is possible:
 (progn
   (defun resize-horizontal (value object) (incf (width object) value))
   (defun resize-vertical (value object) (incf (height object) value)))
+```
+
+```lisp
+(map-axes (+ -)
+  (@ 5 3))
+=> (8 2)
+```
+
+```lisp
+(expand-axes (+ -) (list x)
+  (x 5 3))
+=> (8 2)
 ```
