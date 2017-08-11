@@ -17,16 +17,15 @@
 
 (in-package :axes)
 
-(defmacro do-axes-hashed (axes &body body)
-  `(progn
+(defmacro do-axes-hashed (axes function char &body body)
+  `(,function
      ,@(loop for i from 0 upto (1- (length (second (first axes))))
           collect `(progn
-                     ,@(operate-sexp body #'operate-symbol-hashed axes i)))
-     (values)))
+                     ,@(operate-sexp body char #'operate-symbol-hashed (list axes i))))))
 
-(defun operate-symbol-hashed (symbol original-symbol axes index)
+(defun operate-symbol-hashed (symbol original-symbol char axes index)
   (multiple-value-bind (interval start end)
-      (find-interval symbol original-symbol)
+      (find-interval symbol original-symbol char)
     (if (null interval)
         symbol
         (let ((key (find interval axes :key #'first-name :test #'equalp)))
@@ -37,5 +36,6 @@
                             (nth index (second key))
                             start end)
            original-symbol
+           char
            axes
            index)))))

@@ -17,21 +17,21 @@
 
 (in-package :axes)
 
-(defmacro do-axes-individual (axes &body body)
+(defmacro do-axes-individual (axes function char &body body)
   (check-individual-axes axes)
-  `(progn
+  `(,function
      ,@(loop for axis in axes
           collect `(progn
-                     ,@(operate-sexp body #'operate-symbol-individual axis)))
-     (values)))
+                     ,@(operate-sexp body char #'operate-symbol-individual (list axis))))))
 
-(defun operate-symbol-individual (symbol original-symbol replace)
+(defun operate-symbol-individual (symbol original-symbol char replace)
   (let* ((name (symbol-name symbol))
-         (start (position #\@ name)))
+         (start (position char name)))
     (if start
         (operate-symbol-individual
          (replace-section symbol replace start)
          original-symbol
+         char
          replace)
         symbol)))
 

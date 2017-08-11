@@ -19,5 +19,5 @@
 
 (defpackage :axes
   (:use #:cl)
-  (:export #:do-axes))
+  (:export #:do-axes #:map-axes #:expand-axes))
 

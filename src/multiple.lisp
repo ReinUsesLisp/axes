@@ -17,18 +17,17 @@
 
 (in-package :axes)
 
-(defmacro do-axes-multiple (axes &body body)
+(defmacro do-axes-multiple (axes function char &body body)
   (check-multiple-axes axes)
-  `(progn
+  `(,function
      ,@(loop for axis in axes
           collect `(progn
-                     ,@(operate-sexp body #'operate-symbol-multiple axis)))
-     (values)))
+                     ,@(operate-sexp body char #'operate-symbol-multiple (list axis))))))
 
-(defun operate-symbol-multiple (symbol original-symbol axis)
+(defun operate-symbol-multiple (symbol original-symbol char axis)
   (declare (symbol symbol original-symbol) (list axis))
   (multiple-value-bind (interval start end)
-      (find-interval symbol original-symbol)
+      (find-interval symbol original-symbol char)
     (if (null interval)
         symbol
         (let ((index (parse-integer interval)))
@@ -38,6 +37,7 @@
           (operate-symbol-multiple
            (replace-section symbol (nth (1- index) axis) start end)
            original-symbol
+           char
            axis)))))
 
 (defun check-multiple-axes (axes)

@@ -17,21 +17,19 @@
 
 (in-package :axes)
 
-(defun find-interval (symbol original-symbol)
+(defun find-interval (symbol original-symbol char)
   (let* ((name (symbol-name symbol))
-         (start (position #\@ name)))
+         (start (position char name)))
     (if (null start)
         (values nil nil nil)
-        (let ((delta (position #\@ (subseq name (1+ start)))))
-          ;; check if there is a closing @
+        (let ((delta (position char (subseq name (1+ start)))))
+          ;; check if there is a closing char
           (unless delta
-            (error "No @-@ interval defined in symbol ~A." original-symbol))
+            (error "No ~A.~A interval defined in symbol ~A."
+                   char char original-symbol))
           (let* ((end (+ start delta 1))
                  (interval (subseq name (1+ start) end)))
             (values interval start end))))))
-
-(defun first-name (list)
-  (symbol-name (first list)))
 
 (defun replace-section (symbol replace start &optional (end start))
   (let ((name (symbol-name symbol)))
@@ -40,3 +38,12 @@
                     replace
                     (subseq name (1+ end)))
             (symbol-package symbol))))
+
+(defun first-name (list)
+  (symbol-name (first list)))
+
+(defun cast-to-character (obj)
+  (cond ((characterp obj) obj)
+        ((symbolp obj) (char (symbol-name obj) 0))
+        ((stringp obj) (char obj 0))
+        (t (error "Can't convert ~A to character." obj))))

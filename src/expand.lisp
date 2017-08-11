@@ -18,7 +18,16 @@
 (in-package :axes)
 
 (defmacro do-axes (axes &body body)
-  `(,(find-axes-mode axes) ,axes ,@body))
+  `(expand-axes ,axes (progn) ,@body))
+
+(defmacro map-axes (axes &body body)
+  `(expand-axes ,axes (list) ,@body))
+
+(defmacro expand-axes (axes (&optional (function 'progn) (char #\@)) &body body)
+  `(,(find-axes-mode axes) ,axes
+     ,function
+     ,(cast-to-character char)
+     ,@body))
 
 (defun find-axes-mode (axes)
   (cond
@@ -30,12 +39,15 @@
     ((every #'listp axes) 'do-axes-multiple)
     (t (error "Unknown axes mode ~A" axes))))
 
-(defun operate-sexp (sexp operate &rest data)
+(defun operate-sexp (sexp char operate data)
   (cond
     ((listp sexp)
-     (if (member (first sexp) '(do-axes map-axes))
-         sexp                           ; guard nested expansion
+     (if (not (member (first sexp) '(do-axes map-axes expand-axes)))
          (loop for sub-sexp in sexp
-            collect (apply #'operate-sexp `(,sub-sexp ,operate ,@data)))))
-    ((symbolp sexp) (apply operate `(,sexp ,sexp ,@data)))
+            collect (operate-sexp sub-sexp char operate data))
+         ;; guard nested expansion
+         (list* (first sexp)
+                (operate-sexp (second sexp) char operate data)
+                (cddr sexp))))
+    ((symbolp sexp) (apply operate (list* sexp sexp char data)))
     (t sexp)))
