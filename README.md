@@ -12,8 +12,7 @@ Basic syntax inserts the desired symbol replacing @ :
 (progn
   (incf (the-axis-x-in-foo foo) speed)
   (incf (the-axis-y-in-foo foo) speed)
-  (incf (the-axis-z-in-foo foo) speed)
-  (values))
+  (incf (the-axis-z-in-foo foo) speed))
 ```
 
 It is also possible to use insert multiple symbols, syntax becomes `@N@` where N
