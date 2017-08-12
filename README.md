@@ -31,9 +31,11 @@ is the index.
     (incf (axis-y foo) (size-height foo))))
 ```
 
-A hash-based symbol inserting is possible:
+A hash-based symbol inserting is possible (read them like a "let" that takes
+as value the list of inserted symbols):
 ```lisp
-(do-axes ((direction (horizontal vertical)) (size (width height)))
+(do-axes ((direction (horizontal vertical))
+          (size (width height)))
   (defun resize-@direction@ (value object)
     (incf (@size@ object) value)))
 
@@ -49,8 +51,13 @@ A hash-based symbol inserting is possible:
 => (8 2)
 ```
 
+Most generic macro (previous macros are written on top of it).
+DO-AXES is implemented using (expand-axes axes (progn @) body).
+MAP-AXES is implemented using (expand-axes axes (list @) body).
+Take a look at the following example (it maps and uses x instead of @):
 ```lisp
 (expand-axes (+ -) (list x)
   (x 5 3))
 => (8 2)
 ```
+
