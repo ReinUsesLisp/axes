@@ -48,7 +48,11 @@ as value the list of inserted symbols):
 ```lisp
 (map-axes (+ -)
   (@ 5 3))
-=> (8 2)
+
+;;; expands to:
+(list
+  (+ 5 3)
+  (- 5 3))
 ```
 
 Most generic macro (previous macros are written on top of it).
